@@ -158,7 +158,7 @@ export function ImageOverlay({
     return (
         <div
             className={cn(
-                "relative aspect-video w-full rounded-2xl overflow-hidden border border-white/10 bg-black/50 shadow-2xl group flex items-center justify-center touch-none",
+                "relative aspect-[4/3] w-full rounded-2xl overflow-hidden border border-white/10 bg-black/50 shadow-2xl group flex items-center justify-center touch-none",
                 isMarkupMode ? "cursor-crosshair ring-2 ring-primary ring-offset-4 ring-offset-black" : ""
             )}
             onPointerDown={handlePointerDown}
@@ -408,7 +408,7 @@ export function ImageOverlay({
 
             {/* Centered Overlay Container matching image aspect ratio */}
             <div className="absolute inset-0 flex items-center justify-center" ref={containerRef}>
-                <div className="relative aspect-video w-full h-full">
+                <div className="relative aspect-[4/3] w-full h-full">
                     {/* SVG Layer for Polygons & Markup */}
                     <svg
                         viewBox="0 0 1000 1000"
@@ -427,28 +427,6 @@ export function ImageOverlay({
                             />
                         )}
 
-                        {/* AI Findings */}
-                        {damages.map((damage, i) => {
-                            const isVisible = showAllPolygons || activeDamage === i;
-                            if (!damage.polygon || damage.polygon.length < 3 || !isVisible) return null;
-
-                            const color = getColor(damage.severity);
-                            const points = damage.polygon.map(p => `${p[1]},${p[0]}`).join(' ');
-
-                            return (
-                                <polygon
-                                    key={`poly-${i}`}
-                                    points={points}
-                                    stroke={color.stroke}
-                                    strokeWidth={showAllPolygons && activeDamage !== i ? "1.5" : "3"}
-                                    fill={color.fill}
-                                    className={cn(
-                                        "transition-all duration-300",
-                                        isVisible ? "opacity-100" : "opacity-0"
-                                    )}
-                                />
-                            );
-                        })}
 
                         {/* Pilot Markups (SVG Paths) */}
                         {damages[0]?.annotations?.map((anno, idx) => {

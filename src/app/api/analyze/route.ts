@@ -12,13 +12,11 @@ const FindingSchema = z.object({
     defectType: z.string().describe("Category: Cracking, Corrosion, Water Damage, Maintenance, Structural, Efficiency, Biological Growth, Mechanical Damage, Weathering, Misalignment"),
     component: z.string().describe("Affected component: be specific, e.g. 'North Gutter Run', 'Ridge Cap Section B', 'Solar Panel Row 3', 'East Fascia Board', 'Valley Flashing'"),
     areaLocation: z.string().describe("Where on the asset this defect is located using compass directions and position descriptors, e.g. 'Northwest corner, upper roof plane', 'Southeast ridge line, near hip junction', 'Central section, above second-floor windows'"),
-    polygon: z.array(z.array(z.number()).length(2)).min(4).max(16).describe(
-        "Polygon vertices as [y, x] pairs on a 0-1000 normalized scale. " +
-        "The polygon must TIGHTLY trace the outline of the defect — hug the edges precisely. " +
-        "Use 6-12 points for irregular shapes, 4-6 for rectangular defects. " +
+    focalPoint: z.array(z.number()).length(2).describe(
+        "The exact [y, x] center point of the defect on a 0-1000 normalized scale. " +
         "y=0 is the TOP of the image, y=1000 is the BOTTOM. " +
         "x=0 is the LEFT, x=1000 is the RIGHT. " +
-        "IMPORTANT: Do NOT use a large rectangle covering most of the image. Trace tightly around the actual defect."
+        "Example: [500, 500] is the exact center of the image."
     ),
     estimatedSize: z.string().describe("Rough estimated size of the defect in human-readable terms, e.g. '~30cm crack', '~2m section of gutter', '~0.5m² area'"),
     description: z.string().describe("Professional 2-3 sentence description of the visual evidence, what the defect looks like, and potential consequences if left untreated"),
@@ -54,14 +52,10 @@ You MUST systematically scan the ENTIRE image and identify ALL visible defects, 
 ### Area Mapping
 For each image, describe WHAT PART of the asset is visible (e.g., 'northern roof plane', 'eastern gutter run', 'solar array west section'). Use compass directions if the orientation is discernible.
 
-### Polygon Tracing Rules
-- TIGHTLY trace the outline of each defect — follow the actual boundary of the damaged area
-- For LINEAR defects (cracks, gutter debris): use a narrow elongated polygon following the line
-- For AREA defects (corrosion patches, staining): trace the perimeter of the affected area
-- For POINT defects (popped fasteners, small holes): use a small polygon (6 points) around the defect
-- NEVER use a large rectangle covering most of the image
-- Use [y, x] format where (0,0) is top-left and (1000,1000) is bottom-right
-- Use 6-12 vertices for complex shapes
+### Defect Pinpointing
+- Identify the exact visual center of the defect
+- Return a single \`focalPoint\` using [y, x] format where (0,0) is top-left and (1000,1000) is bottom-right
+- Make sure the point lands exactly on the damaged area
 
 ### Report Writing Standards
 - Write in third-person professional tone
@@ -146,10 +140,8 @@ export async function POST(req: Request) {
                     ``,
                     `1. DESCRIBE what area/section of the ${assetType} asset is visible in this image`,
                     `2. IDENTIFY ALL visible defects, damage, or maintenance issues — be thorough, check every area of the image`,
-                    `3. TRACE each defect with a TIGHT polygon on the 0-1000 coordinate grid`,
-                    `4. Provide professional descriptions and actionable recommendations with timeframes`,
-                    ``,
-                    `Remember: Each finding needs a precise, tight polygon. Do NOT draw large rectangles over the whole image.`
+                    `3. IDENTIFY the exact focal point of each defect on the 0-1000 coordinate grid`,
+                    `4. Provide professional descriptions and actionable recommendations with timeframes`
                 ].filter(Boolean).join('\n');
 
                 const result = await generateText({
@@ -182,7 +174,7 @@ export async function POST(req: Request) {
                     const mappedFindings = analysisResult.findings.map((f: any, j: number) => ({
                         ...f,
                         imageIndex: i,
-                        focalPoint: computeCenter(f.polygon),
+                        focalPoint: f.focalPoint,
                         id: `finding-${Date.now()}-${i}-${j}`,
                         annotations: []
                     }));
@@ -221,7 +213,6 @@ export async function POST(req: Request) {
                 areaLocation: "Overall asset",
                 estimatedSize: "N/A",
                 imageIndex: 0,
-                polygon: [[100, 100], [100, 900], [900, 900], [900, 100]],
                 focalPoint: [500, 500],
                 annotations: [],
                 description: "Visual inspection did not identify significant defects. The asset appears to be in serviceable condition with no immediate remediation required.",
@@ -262,9 +253,3 @@ export async function POST(req: Request) {
     }
 }
 
-function computeCenter(polygon: number[][]): number[] {
-    if (!polygon || polygon.length === 0) return [500, 500];
-    let y = 0, x = 0;
-    polygon.forEach(p => { y += p[0]; x += p[1]; });
-    return [Math.round(y / polygon.length), Math.round(x / polygon.length)];
-}

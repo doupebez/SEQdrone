@@ -115,6 +115,8 @@ const styles = StyleSheet.create({
         color: '#1e293b',
         backgroundColor: COLORS.pageBackground,
         position: 'relative',
+        paddingTop: 65,
+        paddingBottom: 65,
     },
 
     // === Cover Page ===
@@ -243,6 +245,10 @@ const styles = StyleSheet.create({
 
     // === Header (all other pages) ===
     header: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -317,7 +323,9 @@ const styles = StyleSheet.create({
 
     // === Content ===
     content: {
-        padding: '16 40 50 40',
+        paddingHorizontal: 40,
+        paddingTop: 16,
+        paddingBottom: 0,
     },
 
     // === Section Headers ===
@@ -508,11 +516,12 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#e2e8f0',
+        height: 386,
     },
     findingImage: {
         width: '100%',
-        height: 220,
-        objectFit: 'cover',
+        height: '100%',
+        objectFit: 'fill',
     },
     findingImageLabel: {
         position: 'absolute',
@@ -658,7 +667,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#e2e8f0',
         borderRadius: 6,
-        overflow: 'hidden',
         marginBottom: 16,
     },
     tableHeader: {
@@ -696,7 +704,7 @@ const styles = StyleSheet.create({
 // ── Helper Components ──────────────────────────────────────────────────────────
 
 const PageHeader = ({ title, jobId }: { title: string; jobId: string }) => (
-    <View style={styles.header}>
+    <View style={styles.header} fixed>
         <View style={styles.headerLeft}>
             <View style={styles.headerBrandDot} />
             <Text style={styles.headerCompany}>SEQ Drone Inspections</Text>
@@ -994,21 +1002,8 @@ export const ReportDocument = ({ jobData, analysisResult, images, imageDates, im
                 const imageCoord = imageCoords?.[safeImageIdx];
                 const imageScale = imageScales?.[safeImageIdx];
 
-                // Calculate zoomed view bounds from polygon
-                const polygon = damage.polygon || [];
-                let zoomMinY = 1000, zoomMaxY = 0, zoomMinX = 1000, zoomMaxX = 0;
-                polygon.forEach(([y, x]: number[]) => {
-                    zoomMinY = Math.min(zoomMinY, y);
-                    zoomMaxY = Math.max(zoomMaxY, y);
-                    zoomMinX = Math.min(zoomMinX, x);
-                    zoomMaxX = Math.max(zoomMaxX, x);
-                });
-                // Add padding
-                const pad = 80;
-                zoomMinY = Math.max(0, zoomMinY - pad);
-                zoomMaxY = Math.min(1000, zoomMaxY + pad);
-                zoomMinX = Math.max(0, zoomMinX - pad);
-                zoomMaxX = Math.min(1000, zoomMaxX + pad);
+                // No longer calculating zoomed view from polygon since we just use focalPoint
+                // which is already a single [y,x] coordinate
 
                 return (
                     <Page key={damage.id || `finding-${index}`} size="A4" style={styles.page}>
@@ -1033,74 +1028,64 @@ export const ReportDocument = ({ jobData, analysisResult, images, imageDates, im
                                 <View style={styles.findingImageContainer}>
                                     <Image src={imageSrc} style={styles.findingImage} />
 
-                                    {/* SVG overlay for polygon */}
-                                    {polygon.length >= 3 && (
-                                        <Svg viewBox="0 0 1000 1000" style={{
+                                    {/* SVG overlay for Focal Point Marker */}
+                                    {damage.focalPoint && (
+                                        <Svg viewBox="0 0 1000 1000" preserveAspectRatio="none" style={{
                                             position: 'absolute',
                                             top: 0,
                                             left: 0,
                                             width: '100%',
                                             height: '100%',
                                         }}>
-                                            <SvgPolygon
-                                                points={polygon.map(([y, x]: number[]) => `${x},${y}`).join(' ')}
-                                                fill={`${severityColor}33`}
+                                            {/* Focal point pulse circle */}
+                                            <Circle
+                                                cx={damage.focalPoint[1]}
+                                                cy={damage.focalPoint[0]}
+                                                r={16}
+                                                fill="none"
                                                 stroke={severityColor}
-                                                strokeWidth={3}
+                                                strokeWidth={2}
+                                                strokeDasharray="4,4"
                                             />
-                                            {/* Focal point marker */}
-                                            {damage.focalPoint && (
-                                                <>
-                                                    <Circle
-                                                        cx={damage.focalPoint[1]}
-                                                        cy={damage.focalPoint[0]}
-                                                        r={16}
-                                                        fill="none"
-                                                        stroke={severityColor}
-                                                        strokeWidth={2}
-                                                        strokeDasharray="4,4"
-                                                    />
-                                                    <Circle
-                                                        cx={damage.focalPoint[1]}
-                                                        cy={damage.focalPoint[0]}
-                                                        r={4}
-                                                        fill={severityColor}
-                                                    />
-                                                    {/* Crosshair lines */}
-                                                    <Line
-                                                        x1={damage.focalPoint[1] - 22}
-                                                        y1={damage.focalPoint[0]}
-                                                        x2={damage.focalPoint[1] - 12}
-                                                        y2={damage.focalPoint[0]}
-                                                        stroke={severityColor}
-                                                        strokeWidth={2}
-                                                    />
-                                                    <Line
-                                                        x1={damage.focalPoint[1] + 12}
-                                                        y1={damage.focalPoint[0]}
-                                                        x2={damage.focalPoint[1] + 22}
-                                                        y2={damage.focalPoint[0]}
-                                                        stroke={severityColor}
-                                                        strokeWidth={2}
-                                                    />
-                                                    <Line
-                                                        x1={damage.focalPoint[1]}
-                                                        y1={damage.focalPoint[0] - 22}
-                                                        x2={damage.focalPoint[1]}
-                                                        y2={damage.focalPoint[0] - 12}
-                                                        stroke={severityColor}
-                                                        strokeWidth={2}
-                                                    />
-                                                    <Line
-                                                        x1={damage.focalPoint[1]}
-                                                        y1={damage.focalPoint[0] + 12}
-                                                        x2={damage.focalPoint[1]}
-                                                        y2={damage.focalPoint[0] + 22}
-                                                        stroke={severityColor}
-                                                        strokeWidth={2}
-                                                    />
-                                                </>
-                                            )}
+                                            <Circle
+                                                cx={damage.focalPoint[1]}
+                                                cy={damage.focalPoint[0]}
+                                                r={4}
+                                                fill={severityColor}
+                                            />
+                                            {/* Crosshair lines */}
+                                            <Line
+                                                x1={damage.focalPoint[1] - 22}
+                                                y1={damage.focalPoint[0]}
+                                                x2={damage.focalPoint[1] - 12}
+                                                y2={damage.focalPoint[0]}
+                                                stroke={severityColor}
+                                                strokeWidth={2}
+                                            />
+                                            <Line
+                                                x1={damage.focalPoint[1] + 12}
+                                                y1={damage.focalPoint[0]}
+                                                x2={damage.focalPoint[1] + 22}
+                                                y2={damage.focalPoint[0]}
+                                                stroke={severityColor}
+                                                strokeWidth={2}
+                                            />
+                                            <Line
+                                                x1={damage.focalPoint[1]}
+                                                y1={damage.focalPoint[0] - 22}
+                                                x2={damage.focalPoint[1]}
+                                                y2={damage.focalPoint[0] - 12}
+                                                stroke={severityColor}
+                                                strokeWidth={2}
+                                            />
+                                            <Line
+                                                x1={damage.focalPoint[1]}
+                                                y1={damage.focalPoint[0] + 12}
+                                                x2={damage.focalPoint[1]}
+                                                y2={damage.focalPoint[0] + 22}
+                                                stroke={severityColor}
+                                                strokeWidth={2}
+                                            />
                                         </Svg>
                                     )}
 

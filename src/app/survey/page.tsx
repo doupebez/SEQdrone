@@ -35,7 +35,7 @@ import {
     LayoutDashboard
 } from 'lucide-react';
 import Link from 'next/link';
-import { cn, calculatePriorityScore, calculatePolygonArea, calculateGrowthDelta } from '@/lib/utils';
+import { cn, calculatePriorityScore } from '@/lib/utils';
 import { FileUploader } from '@/components/FileUploader';
 import { JobContextForm, JobData } from '@/components/JobContextForm';
 import { ImageOverlay, Annotation } from '@/components/ImageOverlay';
@@ -334,19 +334,15 @@ export default function SurveyPage() {
         if (!prevFinding) return;
 
         const currentFinding = analysisResult.damages[currentIdx];
-        const currentScale = imageScales[currentFinding.imageIndex] || 1;
-        const previousScale = prevSurvey?.analysisResult.assetPolygon ? 1 : 1; // Simplify or assume calibrated
-
-        const currentArea = currentFinding.polygon ? calculatePolygonArea(currentFinding.polygon, currentScale) : 0;
-        const previousArea = prevFinding.polygon ? calculatePolygonArea(prevFinding.polygon, 1) : 0; // Calibration mismatch check needed in future
-
-        const delta = calculateGrowthDelta(currentArea, previousArea);
 
         const newDamages = [...analysisResult.damages];
         newDamages[currentIdx] = {
             ...newDamages[currentIdx],
             parentFindingId: previousFindingId,
-            comparisonData: delta
+            comparisonData: {
+                status: 'Linked',
+                percentChange: 0
+            }
         };
 
         setAnalysisResult({ ...analysisResult, damages: newDamages });
@@ -769,11 +765,9 @@ export default function SurveyPage() {
                                                                                     <Sparkles className="size-6" />}
                                                                         </div>
                                                                         <div>
-                                                                            <h5 className="text-xs font-black uppercase text-white">{damage.comparisonData.status}</h5>
+                                                                            <h5 className="text-xs font-black uppercase text-white">Linked</h5>
                                                                             <p className="text-[10px] text-muted-foreground mt-1">
-                                                                                {damage.comparisonData.status === 'Growing' ? `Expanded by ${damage.comparisonData.percentChange}%` :
-                                                                                    damage.comparisonData.status === 'Stable' ? 'No significant change' :
-                                                                                        'Baseline established'}
+                                                                                Tracking established across surveys
                                                                             </p>
                                                                         </div>
                                                                         <button
