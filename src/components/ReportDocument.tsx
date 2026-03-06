@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#e2e8f0',
-        height: 386,
+        height: 280, // Reduced from 386 to free up vertical space for recommendation text
     },
     findingImage: {
         width: '100%',
