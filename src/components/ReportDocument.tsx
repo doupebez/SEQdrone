@@ -27,6 +27,7 @@ interface ReportDocumentProps {
     imageDates?: string[];
     imageCoords?: { lat: number, lng: number }[];
     imageScales?: (number | null)[];
+    imageMetadata?: any[];
 }
 
 // ── Color System ───────────────────────────────────────────────────────────────
@@ -743,7 +744,11 @@ const SeverityDot = ({ severity, size = 6 }: { severity: string; size?: number }
 
 // ── Main Document Component ────────────────────────────────────────────────────
 
-export const ReportDocument = ({ jobData, analysisResult, images, imageDates, imageCoords, imageScales }: ReportDocumentProps) => {
+export const ReportDocument = ({ jobData, analysisResult, images, imageDates,
+    imageCoords = [],
+    imageScales = [],
+    imageMetadata = [],
+}: ReportDocumentProps) => {
     const reportDate = new Date().toLocaleDateString('en-AU', {
         year: 'numeric',
         month: 'long',
@@ -1001,6 +1006,7 @@ export const ReportDocument = ({ jobData, analysisResult, images, imageDates, im
                 const imageDate = imageDates?.[safeImageIdx];
                 const imageCoord = imageCoords?.[safeImageIdx];
                 const imageScale = imageScales?.[safeImageIdx];
+                const meta = imageMetadata?.[safeImageIdx];
 
                 // No longer calculating zoomed view from polygon since we just use focalPoint
                 // which is already a single [y,x] coordinate
@@ -1093,6 +1099,26 @@ export const ReportDocument = ({ jobData, analysisResult, images, imageDates, im
                                     <View style={styles.findingImageLabel}>
                                         <Text style={styles.findingImageLabelText}>Image {safeImageIdx + 1}</Text>
                                     </View>
+                                </View>
+                            )}
+
+                            {/* Telemetry Bar */}
+                            {meta && (meta.altitude || meta.pitch || meta.model) && (
+                                <View style={{
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    backgroundColor: '#f1f5f9',
+                                    padding: '6 10',
+                                    borderRadius: 4,
+                                    marginBottom: 16,
+                                    borderWidth: 1,
+                                    borderColor: '#e2e8f0'
+                                }}>
+                                    {meta.model && <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' }}>DRONE: {meta.model}</Text>}
+                                    {meta.altitude !== null && <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#64748b' }}>ALT: {Math.round(meta.altitude)}m</Text>}
+                                    {meta.pitch !== null && <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#64748b' }}>PITCH: {Math.round(meta.pitch)}°</Text>}
+                                    {meta.heading !== null && <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#64748b' }}>HDG: {Math.round(meta.heading)}°</Text>}
+                                    {meta.timestamp && <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#64748b' }}>TIME: {new Date(meta.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>}
                                 </View>
                             )}
 

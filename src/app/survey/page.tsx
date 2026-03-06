@@ -53,8 +53,18 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import EXIF from 'exif-js';
+import exifr from 'exifr';
 import { SiteMapView } from '@/components/SiteMapView';
+
+export interface DroneMetadata {
+    lat: number;
+    lng: number;
+    altitude: number | null;
+    pitch: number | null;
+    heading: number | null;
+    timestamp: string | null;
+    model: string | null;
+}
 
 
 
@@ -76,42 +86,48 @@ export default function SurveyPage() {
     });
     const [imageDates, setImageDates] = useState<string[]>([]);
     const [imageCoords, setImageCoords] = useState<{ lat: number, lng: number }[]>([]);
+    const [imageMetadata, setImageMetadata] = useState<DroneMetadata[]>([]);
 
     const handleImagesSelected = async (newImages: File[]) => {
         setImages((prev) => [...prev, ...newImages]);
         const newDates = newImages.map(f => new Date(f.lastModified).toLocaleString());
         setImageDates(prev => [...prev, ...newDates]);
 
-        // Extract GPS Coords
-        const newCoords = await Promise.all(newImages.map(extractGPS));
-        setImageCoords(prev => [...prev, ...newCoords]);
+        // Extract rich DJI metadata using exifr
+        const newMetaData = await Promise.all(newImages.map(extractDroneMetadata));
+        setImageMetadata(prev => [...prev, ...newMetaData]);
+
+        // Keep coords for backwards compatibility in other components
+        setImageCoords(prev => [...prev, ...newMetaData.map(m => ({ lat: m.lat, lng: m.lng }))]);
     };
 
-    const extractGPS = (file: File): Promise<{ lat: number, lng: number }> => {
-        return new Promise((resolve) => {
-            EXIF.getData(file as any, function (this: any) {
-                const lat = EXIF.getTag(this, "GPSLatitude");
-                const latRef = EXIF.getTag(this, "GPSLatitudeRef") || "N";
-                const lng = EXIF.getTag(this, "GPSLongitude");
-                const lngRef = EXIF.getTag(this, "GPSLongitudeRef") || "E";
+    const extractDroneMetadata = async (file: File): Promise<DroneMetadata> => {
+        try {
+            // exifr automatically handles parsing EXIF, TIFF (camera model), and XMP (DJI custom tags)
+            const meta = await exifr.parse(file, { xmp: true, tiff: true, gps: true, exif: true });
 
-                if (!lat || !lng) {
-                    resolve({ lat: 0, lng: 0 }); // Fallback
-                    return;
-                }
+            if (!meta) return { lat: 0, lng: 0, altitude: null, pitch: null, heading: null, timestamp: null, model: null };
 
-                const latDec = (lat[0] + lat[1] / 60 + lat[2] / 3600) * (latRef === "S" ? -1 : 1);
-                const lngDec = (lng[0] + lng[1] / 60 + lng[2] / 3600) * (lngRef === "W" ? -1 : 1);
-
-                resolve({ lat: latDec, lng: lngDec });
-            });
-        });
+            return {
+                lat: meta.latitude || 0,
+                lng: meta.longitude || 0,
+                altitude: meta.RelativeAltitude || null,
+                pitch: meta.GimbalPitchDegree || meta.FlightPitchDegree || null,
+                heading: meta.GimbalYawDegree || meta.FlightYawDegree || null,
+                timestamp: meta.DateTimeOriginal ? new Date(meta.DateTimeOriginal).toISOString() : null,
+                model: meta.Model || null
+            };
+        } catch (err) {
+            console.error('Failed to parse EXIF/XMP for file', file.name, err);
+            return { lat: 0, lng: 0, altitude: null, pitch: null, heading: null, timestamp: null, model: null };
+        }
     };
 
     const handleRemoveImage = (index: number) => {
         setImages((prev) => prev.filter((_, i) => i !== index));
         setImageDates(prev => prev.filter((_, i) => i !== index));
         setImageCoords(prev => prev.filter((_, i) => i !== index));
+        setImageMetadata(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleJobDataChange = (field: keyof JobData, value: string) => {
@@ -283,6 +299,7 @@ export default function SurveyPage() {
                     images: optimizedImages,
                     jobData,
                     trainingRules: activeRules,
+                    imageMetadata, // Pass DJI metadata context to the AI
                 }),
                 signal: controller.signal
             });
