@@ -3,6 +3,8 @@ import { generateText, Output } from 'ai';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 
+export const maxDuration = 300; // 5 minutes to accommodate up to 50 photo analyses
+
 // Schema for a single finding
 const FindingSchema = z.object({
     title: z.string().describe("Short descriptive title, e.g. 'Gutter Debris Accumulation', 'Perimeter Flashing Corrosion'"),

@@ -229,7 +229,7 @@ export default function SurveyPage() {
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    const maxDim = 1600;
+                    const maxDim = 1000; // Reduced to allow 50+ photos in a single payload
 
                     if (width > height) {
                         if (width > maxDim) {
