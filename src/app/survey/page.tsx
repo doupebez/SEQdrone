@@ -75,6 +75,7 @@ export default function SurveyPage() {
     const findingRefs = useRef<any[]>([]);
     const [step, setStep] = useState<Step>('upload');
     const [images, setImages] = useState<File[]>([]);
+    const [overviewImageIndex, setOverviewImageIndex] = useState<number>(0);
     const [jobData, setJobData] = useState<JobData>({
         id: `survey-${Date.now()}`,
         assetId: `asset-${Date.now()}`,
@@ -177,6 +178,7 @@ export default function SurveyPage() {
                     imageDates={imageDates}
                     imageCoords={imageCoords}
                     imageScales={images.map((_: any, i: number) => imageScales[i] ?? null)}
+                    overviewImageIndex={overviewImageIndex}
                 />
             ).toBlob();
             const url = URL.createObjectURL(blob);
@@ -419,6 +421,8 @@ export default function SurveyPage() {
                                 onImagesSelected={handleImagesSelected}
                                 selectedImages={images}
                                 onRemoveImage={handleRemoveImage}
+                                overviewImageIndex={overviewImageIndex}
+                                onSetOverview={setOverviewImageIndex}
                             />
 
                             <div className="flex justify-end pt-8">

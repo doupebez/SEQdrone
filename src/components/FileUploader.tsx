@@ -9,9 +9,11 @@ interface FileUploaderProps {
     onImagesSelected: (images: File[]) => void;
     selectedImages: File[];
     onRemoveImage: (index: number) => void;
+    overviewImageIndex?: number;
+    onSetOverview?: (index: number) => void;
 }
 
-export function FileUploader({ onImagesSelected, selectedImages, onRemoveImage }: FileUploaderProps) {
+export function FileUploader({ onImagesSelected, selectedImages, onRemoveImage, overviewImageIndex, onSetOverview }: FileUploaderProps) {
     const [isDragging, setIsDragging] = useState(false);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -106,6 +108,18 @@ export function FileUploader({ onImagesSelected, selectedImages, onRemoveImage }
                             >
                                 <X className="w-4 h-4" />
                             </button>
+                            {onSetOverview && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onSetOverview(index); }}
+                                    className={cn(
+                                        "absolute bottom-2 left-2 px-2 py-1 rounded bg-black/60 text-xs backdrop-blur-sm transition-all flex items-center gap-1.5",
+                                        overviewImageIndex === index ? "text-primary border border-primary shadow-[0_0_10px_rgba(163,230,53,0.3)]" : "text-white hover:text-primary opacity-0 group-hover:opacity-100"
+                                    )}
+                                >
+                                    <div className={cn("w-2.5 h-2.5 rounded-full border border-current", overviewImageIndex === index && "bg-primary")} />
+                                    {overviewImageIndex === index ? 'Overview Set' : 'Set as Overview'}
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
