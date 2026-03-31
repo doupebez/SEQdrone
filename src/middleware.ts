@@ -42,15 +42,17 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    // IMPORTANT: Do NOT add logic between createServerClient and getUser()
+    // Use getSession() instead of getUser() to avoid network round-trips
+    // that cause MIDDLEWARE_INVOCATION_TIMEOUT on Vercel Edge.
+    // getSession() reads the JWT from cookies locally (no network call).
     const {
-        data: { user },
-    } = await supabase.auth.getUser();
+        data: { session },
+    } = await supabase.auth.getSession();
 
     const pathname = request.nextUrl.pathname;
 
     // If user is NOT logged in and trying to access protected route → redirect to login
-    if (!user && PROTECTED_ROUTES.some((route) => pathname.startsWith(route))) {
+    if (!session && PROTECTED_ROUTES.some((route) => pathname.startsWith(route))) {
         const url = request.nextUrl.clone();
         url.pathname = '/login';
         url.searchParams.set('redirectTo', pathname);
@@ -58,7 +60,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // If user IS logged in and trying to access auth routes → redirect to dashboard
-    if (user && AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
+    if (session && AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
         const url = request.nextUrl.clone();
         url.pathname = '/dashboard';
         return NextResponse.redirect(url);
