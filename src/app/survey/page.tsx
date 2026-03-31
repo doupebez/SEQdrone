@@ -137,6 +137,7 @@ export default function SurveyPage() {
 
     const [analysisResult, setAnalysisResult] = useState<any>(null);
     const [analyzedImages, setAnalyzedImages] = useState<string[]>([]);
+    const [reportImages, setReportImages] = useState<string[]>([]);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [precisionMode, setPrecisionMode] = useState(false);
     const [reviewMode, setReviewMode] = useState<'inspect' | 'detail' | 'measure' | 'markup'>('inspect');
@@ -169,12 +170,14 @@ export default function SurveyPage() {
         try {
             const { pdf } = await import('@react-pdf/renderer');
             const { ReportDocument } = await import('@/components/ReportDocument');
+            // Use high-res report images for the PDF, falling back to AI images
+            const pdfImages = reportImages.length > 0 ? reportImages : analyzedImages;
             // @ts-ignore
             const blob = await pdf(
                 <ReportDocument
                     jobData={jobData}
                     analysisResult={analysisResult}
-                    images={analyzedImages}
+                    images={pdfImages}
                     imageDates={imageDates}
                     imageCoords={imageCoords}
                     imageScales={images.map((_: any, i: number) => imageScales[i] ?? null)}
@@ -220,7 +223,7 @@ export default function SurveyPage() {
         }
     };
 
-    const optimizeImage = (file: File, index: number): Promise<string> => {
+    const resizeImage = (file: File, index: number, maxDim: number, quality: number, label: string): Promise<string> => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -231,7 +234,6 @@ export default function SurveyPage() {
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    const maxDim = 1000; // Reduced to allow 50+ photos in a single payload
 
                     if (width > height) {
                         if (width > maxDim) {
@@ -249,8 +251,8 @@ export default function SurveyPage() {
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx?.drawImage(img, 0, 0, width, height);
-                    const dataUri = canvas.toDataURL('image/jpeg', 0.85);
-                    console.log(`[Optimize] Image ${index + 1}: ${file.name} → ${width}x${height}, ${dataUri.length} chars`);
+                    const dataUri = canvas.toDataURL('image/jpeg', quality);
+                    console.log(`[${label}] Image ${index + 1}: ${file.name} → ${width}x${height}, ${(dataUri.length / 1024).toFixed(0)}KB`);
                     resolve(dataUri);
                 };
                 img.onerror = () => reject(new Error(`Failed to load image: ${file.name}`));
@@ -259,26 +261,38 @@ export default function SurveyPage() {
         });
     };
 
+    // Aggressively compressed for AI analysis — small payload, allows 50+ photos
+    const optimizeForAI = (file: File, index: number) => resizeImage(file, index, 768, 0.7, 'AI');
+
+    // Moderately compressed for report/UI — sharp enough for professional A4 PDF
+    const optimizeForReport = (file: File, index: number) => resizeImage(file, index, 2400, 0.85, 'Report');
+
     const handleStartAnalysis = async () => {
         setStep('analyzing');
-        setAnalysisLog([`Optimizing ${images.length} image(s)...`, 'Connecting to SEQ Vision engine...']);
+        setAnalysisLog([`Optimizing ${images.length} image(s) (dual-resolution)...`, 'Connecting to SEQ Vision engine...']);
 
         try {
-            // Process each image independently with its index
-            const optimizedImages = await Promise.all(
-                images.map((file, index) => optimizeImage(file, index))
-            );
+            // Generate both image sets in parallel:
+            // - AI images: 768px, aggressive compression for fast API calls
+            // - Report images: 2400px, high quality for sharp PDFs
+            const [aiImages, highResImages] = await Promise.all([
+                Promise.all(images.map((file, index) => optimizeForAI(file, index))),
+                Promise.all(images.map((file, index) => optimizeForReport(file, index))),
+            ]);
 
             // Verify all images are unique
-            const uniqueSet = new Set(optimizedImages.map(img => img.length));
-            console.log(`[Analysis] ${optimizedImages.length} images optimized, ${uniqueSet.size} unique by size`);
-            if (uniqueSet.size < optimizedImages.length) {
+            const uniqueSet = new Set(aiImages.map(img => img.length));
+            console.log(`[Analysis] ${aiImages.length} AI images optimized, ${uniqueSet.size} unique by size`);
+            console.log(`[Analysis] ${highResImages.length} report images generated`);
+            if (uniqueSet.size < aiImages.length) {
                 console.warn('[Analysis] ⚠ Some images may be identical! Check uploads.');
             }
 
-            setAnalyzedImages(optimizedImages);
+            // Store high-res for report/UI display, low-res for AI & review reference
+            setReportImages(highResImages);
+            setAnalyzedImages(highResImages);
 
-            setAnalysisLog(prev => [...prev, `Sending ${optimizedImages.length} assets to AI for review...`, 'Tracing defect boundaries...']);
+            setAnalysisLog(prev => [...prev, `Sending ${aiImages.length} assets to AI for review...`, 'Tracing defect boundaries...']);
 
             const controller = new AbortController();
             // Give more time for multiple images: 55s base + 30s per additional image
@@ -298,7 +312,7 @@ export default function SurveyPage() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    images: optimizedImages,
+                    images: aiImages, // Send small AI-optimized images, not full-res
                     jobData,
                     trainingRules: activeRules,
                     imageMetadata, // Pass DJI metadata context to the AI
@@ -324,7 +338,7 @@ export default function SurveyPage() {
 
             // Verify all imageIndex values are within bounds
             const damagesWithIds = data.damages.map((d: any) => {
-                const safeImageIndex = (d.imageIndex >= 0 && d.imageIndex < optimizedImages.length)
+                const safeImageIndex = (d.imageIndex >= 0 && d.imageIndex < aiImages.length)
                     ? d.imageIndex
                     : 0;
                 if (safeImageIndex !== d.imageIndex) {
