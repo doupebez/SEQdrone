@@ -40,7 +40,8 @@ import { FileUploader } from '@/components/FileUploader';
 import { JobContextForm, JobData } from '@/components/JobContextForm';
 import { ImageOverlay, Annotation } from '@/components/ImageOverlay';
 import { MeasurementOverlay } from '@/components/MeasurementOverlay';
-import { storage, Damage, SurveyRecord, trainingStorage } from '@/lib/storage';
+import { storage, Damage, SurveyRecord, trainingStorage, HeightSafetyInspection } from '@/lib/storage';
+import { HeightSafetyForm } from '@/components/HeightSafetyForm';
 import { useAuth } from '@/components/AuthProvider';
 import {
     TrendingUp,
@@ -68,7 +69,7 @@ export interface DroneMetadata {
 
 
 
-type Step = 'upload' | 'context' | 'analyzing' | 'review';
+type Step = 'upload' | 'context' | 'analyzing' | 'review' | 'height-safety';
 
 export default function SurveyPage() {
     const { user } = useAuth();
@@ -88,6 +89,19 @@ export default function SurveyPage() {
     const [imageDates, setImageDates] = useState<string[]>([]);
     const [imageCoords, setImageCoords] = useState<{ lat: number, lng: number }[]>([]);
     const [imageMetadata, setImageMetadata] = useState<DroneMetadata[]>([]);
+    const [heightSafetyData, setHeightSafetyData] = useState<HeightSafetyInspection>({
+        inspectorName: '',
+        inspectorCert: '',
+        inspectorCompany: '',
+        buildingName: '',
+        buildingAddress: '',
+        buildingDescription: '',
+        inspectionDate: new Date().toISOString().split('T')[0],
+        nextDueDate: '',
+        equipment: [],
+        defects: [],
+        conclusion: '',
+    });
 
     const handleImagesSelected = async (newImages: File[]) => {
         setImages((prev) => [...prev, ...newImages]);
@@ -169,28 +183,47 @@ export default function SurveyPage() {
         setIsGeneratingPdf(true);
         try {
             const { pdf } = await import('@react-pdf/renderer');
-            const { ReportDocument } = await import('@/components/ReportDocument');
-            // Use high-res report images for the PDF, falling back to AI images
-            const pdfImages = reportImages.length > 0 ? reportImages : analyzedImages;
-            // @ts-ignore
-            const blob = await pdf(
-                <ReportDocument
-                    jobData={jobData}
-                    analysisResult={analysisResult}
-                    images={pdfImages}
-                    imageDates={imageDates}
-                    imageCoords={imageCoords}
-                    imageScales={images.map((_: any, i: number) => imageScales[i] ?? null)}
-                    overviewImageIndex={overviewImageIndex}
-                />
-            ).toBlob();
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Survey_Report_${jobData.title.replace(/\s+/g, '_')}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+
+            if (jobData.type === 'height-safety') {
+                const { HeightSafetyReport } = await import('@/components/HeightSafetyReport');
+                // @ts-ignore
+                const blob = await pdf(
+                    <HeightSafetyReport
+                        jobData={jobData}
+                        inspection={heightSafetyData}
+                    />
+                ).toBlob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Height_Safety_Report_${jobData.title.replace(/\s+/g, '_')}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                const { ReportDocument } = await import('@/components/ReportDocument');
+                // Use high-res report images for the PDF, falling back to AI images
+                const pdfImages = reportImages.length > 0 ? reportImages : analyzedImages;
+                // @ts-ignore
+                const blob = await pdf(
+                    <ReportDocument
+                        jobData={jobData}
+                        analysisResult={analysisResult}
+                        images={pdfImages}
+                        imageDates={imageDates}
+                        imageCoords={imageCoords}
+                        imageScales={images.map((_: any, i: number) => imageScales[i] ?? null)}
+                        overviewImageIndex={overviewImageIndex}
+                    />
+                ).toBlob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Survey_Report_${jobData.title.replace(/\s+/g, '_')}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         } catch (error) {
             console.error('PDF Generation failed:', error);
             alert('Failed to generate PDF. Please try again.');
@@ -200,9 +233,39 @@ export default function SurveyPage() {
     };
 
     const handleSaveToDashboard = async () => {
-        if (!analysisResult || !user) return;
+        if (!user) return;
 
         const id = new URLSearchParams(window.location.search).get('id') || `survey-${Date.now()}`;
+
+        if (jobData.type === 'height-safety') {
+            const totalEquipment = heightSafetyData.equipment.length;
+            const failCount = heightSafetyData.equipment.filter(e => e.result === 'Fail').length;
+            const passRate = totalEquipment > 0 ? Math.round((heightSafetyData.equipment.filter(e => e.result === 'Pass').length / totalEquipment) * 100) : 100;
+            try {
+                await storage.saveSurvey({
+                    id,
+                    date: new Date().toISOString(),
+                    jobData,
+                    analysisResult: {
+                        summary: heightSafetyData.conclusion || 'Height Safety Inspection',
+                        damages: [],
+                        assetHealthScore: passRate,
+                        heightSafetyData: heightSafetyData,
+                    } as any,
+                    thumbnail: '',
+                    findingCount: failCount,
+                    healthScore: passRate,
+                    status: 'Finalized'
+                }, user.id);
+                setAnalysisLog(prev => [...prev, "✓ Height Safety Inspection saved to Dashboard."]);
+            } catch (error) {
+                console.error('Failed to save survey:', error);
+                alert('Failed to save. Please try again.');
+            }
+            return;
+        }
+
+        if (!analysisResult) return;
 
         try {
             await storage.saveSurvey({
@@ -411,7 +474,12 @@ export default function SurveyPage() {
                         <span className="text-sm font-medium bg-white/5 py-1 px-3 rounded-full">New Survey</span>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Step {step === 'upload' ? 1 : step === 'context' ? 2 : 3} of 3</span>
+                        <span>
+                            {jobData.type === 'height-safety'
+                                ? `Step ${step === 'context' ? 1 : 2} of 2`
+                                : `Step ${step === 'upload' ? 1 : step === 'context' ? 2 : 3} of 3`
+                            }
+                        </span>
                     </div>
                 </div>
             </header>
@@ -480,12 +548,18 @@ export default function SurveyPage() {
                                 </button>
 
                                 <button
-                                    onClick={handleStartAnalysis}
+                                    onClick={() => {
+                                        if (jobData.type === 'height-safety') {
+                                            setStep('height-safety');
+                                        } else {
+                                            handleStartAnalysis();
+                                        }
+                                    }}
                                     disabled={!jobData.title || !jobData.description}
                                     className="flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-full font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 hover:scale-105 transition-all"
                                 >
-                                    Start Analysis
-                                    <Sparkles className="size-4" />
+                                    {jobData.type === 'height-safety' ? 'Continue to Register' : 'Start Analysis'}
+                                    {jobData.type === 'height-safety' ? <Shield className="size-4" /> : <Sparkles className="size-4" />}
                                 </button>
                             </div>
                         </motion.div>
@@ -533,6 +607,57 @@ export default function SurveyPage() {
                                 <div className="flex gap-3 animate-pulse">
                                     <span className="text-primary opacity-50">[{new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>
                                     <span className="text-primary">Awaiting Vision API response...</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {step === 'height-safety' && (
+                        <motion.div
+                            key="height-safety"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-8 pb-20"
+                        >
+                            <div className="text-center space-y-2">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">
+                                    Height Safety Inspection
+                                </div>
+                                <h1 className="text-3xl font-bold">Equipment Register & Defects</h1>
+                                <p className="text-muted-foreground">Log all height safety equipment, record any defects, and generate the report.</p>
+                            </div>
+
+                            <HeightSafetyForm
+                                data={heightSafetyData}
+                                onChange={setHeightSafetyData}
+                            />
+
+                            <div className="flex justify-between items-center pt-8 border-t border-white/5">
+                                <button
+                                    onClick={() => setStep('context')}
+                                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground px-6 py-3 font-medium transition-colors"
+                                >
+                                    <ChevronLeft className="size-4" />
+                                    Back to Details
+                                </button>
+
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={handleSaveToDashboard}
+                                        className="px-6 py-3 rounded-full bg-primary/20 border border-primary/30 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/30 transition-all flex items-center gap-2"
+                                    >
+                                        <CheckCircle2 className="size-4" />
+                                        Save to Dashboard
+                                    </button>
+                                    <button
+                                        onClick={handleDownloadPdf}
+                                        disabled={isGeneratingPdf}
+                                        className="flex items-center gap-2 bg-white text-black px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest hover:bg-white/90 shadow-2xl shadow-white/10 transition-all disabled:opacity-50 active:scale-95"
+                                    >
+                                        <FileText className="size-4" />
+                                        {isGeneratingPdf ? 'Generating PDF...' : 'Export PDF Report'}
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>

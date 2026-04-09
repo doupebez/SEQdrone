@@ -74,6 +74,12 @@ const JOB_TYPES = [
         icon: Droplets,
         description: 'Coating condition, corrosion, structural integrity'
     },
+    {
+        id: 'height-safety',
+        label: 'Height Safety',
+        icon: Construction,
+        description: 'Anchor points, static lines, davit bases, fall arrest systems'
+    },
 ];
 
 export function JobContextForm({ data, onChange }: JobContextFormProps) {

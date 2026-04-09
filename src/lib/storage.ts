@@ -26,6 +26,45 @@ export interface Damage {
     annotations?: any[];
 }
 
+// ──── Height Safety Types ────
+
+export interface HeightSafetyEquipment {
+    id: string;
+    location: string;
+    equipmentType: string;
+    fixingMethod: string;
+    ratingKN: string;
+    testMethod: string;
+    ropeAccess: boolean;
+    fallArrest: boolean;
+    result: 'Pass' | 'Fail' | 'No Access';
+}
+
+export interface HeightSafetyDefect {
+    id: string;
+    equipmentIds: string;
+    location: string;
+    riskRating: 'Low' | 'Medium' | 'High' | 'Extreme';
+    description: string;
+    safeForTempUse: boolean;
+    resolution: string;
+    photo?: string;
+}
+
+export interface HeightSafetyInspection {
+    inspectorName: string;
+    inspectorCert: string;
+    inspectorCompany: string;
+    buildingName: string;
+    buildingAddress: string;
+    buildingDescription: string;
+    inspectionDate: string;
+    nextDueDate: string;
+    equipment: HeightSafetyEquipment[];
+    defects: HeightSafetyDefect[];
+    conclusion: string;
+}
+
 export interface SurveyRecord {
     id: string;
     date: string;
