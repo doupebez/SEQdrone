@@ -229,18 +229,20 @@ export function JobContextForm({ data, onChange }: JobContextFormProps) {
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">
-                        What should the AI look for?
-                    </label>
-                    <textarea
-                        value={data.description}
-                        onChange={(e) => onChange('description', e.target.value)}
-                        placeholder="Briefly describe the damage to report. E.g. 'Look for cracked tiles, missing shingles, and hail impact marks on the north side.'"
-                        rows={4}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
-                    />
-                </div>
+                {data.type !== 'height-safety' && (
+                    <div>
+                        <label className="block text-sm font-medium text-muted-foreground mb-2">
+                            What should the AI look for?
+                        </label>
+                        <textarea
+                            value={data.description}
+                            onChange={(e) => onChange('description', e.target.value)}
+                            placeholder="Briefly describe the damage to report. E.g. 'Look for cracked tiles, missing shingles, and hail impact marks on the north side.'"
+                            rows={4}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

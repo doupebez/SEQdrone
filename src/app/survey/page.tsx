@@ -93,8 +93,8 @@ export default function SurveyPage() {
         inspectorName: '',
         inspectorCert: '',
         inspectorCompany: '',
-        buildingName: '',
-        buildingAddress: '',
+        buildingName: '', // populated from jobData.title
+        buildingAddress: '', // populated from jobData.location
         buildingDescription: '',
         inspectionDate: new Date().toISOString().split('T')[0],
         nextDueDate: '',
@@ -486,7 +486,8 @@ export default function SurveyPage() {
 
             <main className="flex-1 container mx-auto px-4 py-8 max-w-5xl">
                 <AnimatePresence mode="wait">
-                    {step === 'upload' && (
+                    {/* Height-safety skips upload entirely */}
+                    {step === 'upload' && jobData.type !== 'height-safety' && (
                         <motion.div
                             key="upload"
                             initial={{ opacity: 0, y: 10 }}
@@ -529,8 +530,15 @@ export default function SurveyPage() {
                             className="space-y-8"
                         >
                             <div className="text-center space-y-2">
-                                <h1 className="text-3xl font-bold">Job Details</h1>
-                                <p className="text-muted-foreground">Tell the AI what to look for in these {images.length} images.</p>
+                                <h1 className="text-3xl font-bold">
+                                    {jobData.type === 'height-safety' ? 'Inspection Details' : 'Job Details'}
+                                </h1>
+                                <p className="text-muted-foreground">
+                                    {jobData.type === 'height-safety'
+                                        ? 'Enter the site and client details for this height safety inspection.'
+                                        : `Tell the AI what to look for in these ${images.length} images.`
+                                    }
+                                </p>
                             </div>
 
                             <JobContextForm
@@ -539,23 +547,31 @@ export default function SurveyPage() {
                             />
 
                             <div className="flex justify-between pt-8">
-                                <button
-                                    onClick={() => setStep('upload')}
-                                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground px-6 py-3 font-medium transition-colors"
-                                >
-                                    <ChevronLeft className="size-4" />
-                                    Back
-                                </button>
+                                {jobData.type !== 'height-safety' ? (
+                                    <button
+                                        onClick={() => setStep('upload')}
+                                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground px-6 py-3 font-medium transition-colors"
+                                    >
+                                        <ChevronLeft className="size-4" />
+                                        Back
+                                    </button>
+                                ) : <div />}
 
                                 <button
                                     onClick={() => {
                                         if (jobData.type === 'height-safety') {
+                                            // Sync job data into height safety form so report has it
+                                            setHeightSafetyData(prev => ({
+                                                ...prev,
+                                                buildingName: jobData.title,
+                                                buildingAddress: jobData.location,
+                                            }));
                                             setStep('height-safety');
                                         } else {
                                             handleStartAnalysis();
                                         }
                                     }}
-                                    disabled={!jobData.title || !jobData.description}
+                                    disabled={!jobData.title || (jobData.type !== 'height-safety' && !jobData.description)}
                                     className="flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-full font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 hover:scale-105 transition-all"
                                 >
                                     {jobData.type === 'height-safety' ? 'Continue to Register' : 'Start Analysis'}

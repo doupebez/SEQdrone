@@ -266,9 +266,8 @@ export function HeightSafetyForm({ data, onChange }: HeightSafetyFormProps) {
                             <Building2 className="size-3" />
                             Site Details
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Building Name" value={data.buildingName} onChange={v => updateField('buildingName', v)} placeholder="e.g. Donkin Tower" />
-                            <InputField label="Address" value={data.buildingAddress} onChange={v => updateField('buildingAddress', v)} placeholder="e.g. 8 Donkin Street, West End" />
+                        <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-400">
+                            <span className="text-slate-500 font-bold">Note:</span> Building name and address are set from the Job Details step.
                         </div>
                         <div>
                             <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Building Description</label>
