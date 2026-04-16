@@ -513,12 +513,12 @@ const styles = StyleSheet.create({
     // Finding image section
     findingImageContainer: {
         position: 'relative',
-        marginBottom: 12,
+        marginBottom: 8,
         borderRadius: 6,
         overflow: 'hidden',
         borderWidth: 2,
         borderColor: '#94a3b8',
-        height: 380, 
+        height: 260, 
     },
     findingImage: {
         width: '100%',
@@ -544,14 +544,14 @@ const styles = StyleSheet.create({
     // Finding detail grid
     findingDetailGrid: {
         flexDirection: 'row',
-        gap: 10,
-        marginBottom: 12,
+        gap: 8,
+        marginBottom: 8,
     },
     findingDetailCard: {
         flex: 1,
         backgroundColor: '#f8fafc',
         borderRadius: 6,
-        padding: 10,
+        padding: 8,
         borderWidth: 1,
         borderColor: '#e2e8f0',
     },
@@ -572,10 +572,10 @@ const styles = StyleSheet.create({
     findingDescription: {
         backgroundColor: COLORS.cardBackground,
         borderRadius: 6,
-        padding: 14,
+        padding: 10,
         borderWidth: 1,
         borderColor: '#e2e8f0',
-        marginBottom: 10,
+        marginBottom: 8,
     },
     findingDescLabel: {
         fontSize: 7,
@@ -594,10 +594,10 @@ const styles = StyleSheet.create({
     // Recommendation box
     recommendationBox: {
         borderRadius: 6,
-        padding: 14,
+        padding: 10,
         borderWidth: 1,
         borderLeftWidth: 3,
-        marginBottom: 10,
+        marginBottom: 8,
     },
     recommendationLabel: {
         fontSize: 7,
@@ -926,16 +926,6 @@ export const ReportDocument = ({ jobData, analysisResult, images, imageDates,
                         );
                     })}
 
-                    {/* Site Overview */}
-                    {overviewImageIndex !== undefined && images[overviewImageIndex] && (
-                        <View style={{ marginTop: 16 }}>
-                            <Text style={styles.sectionSubtitle}>Site Overview</Text>
-                            <View style={{ borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#e2e8f0', height: 180 }}>
-                                <Image src={images[overviewImageIndex]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            </View>
-                        </View>
-                    )}
-
                     {/* Executive Summary */}
                     <View style={{ marginTop: 16 }}>
                         <Text style={styles.sectionSubtitle}>Executive Summary</Text>
@@ -972,28 +962,27 @@ export const ReportDocument = ({ jobData, analysisResult, images, imageDates,
                 <PageFooter date={reportDateShort} />
             </Page>
 
-            {/* ═══════════════════════ IMAGE GALLERY ═══════════════════════ */}
-            {images.length > 1 && (
+            {/* ═══════════════════════ SITE OVERVIEW PAGE ═══════════════════════ */}
+            {overviewImageIndex !== undefined && images[overviewImageIndex] && (
                 <Page size="A4" style={styles.page}>
                     <PageHeader title={jobData.title} jobId={jobData.id} />
                     <View style={styles.content}>
-                        <SectionHeader title="Survey Images" />
-                        <Text style={styles.sectionSubtitle}>
-                            {images.length} images captured during inspection flight
-                        </Text>
-                        <View style={styles.galleryGrid}>
-                            {images.map((img, idx) => (
-                                <View key={`gallery-${idx}`} style={styles.galleryItem}>
-                                    <Image src={img} style={styles.galleryImage} />
-                                    <View style={styles.galleryCaption}>
-                                        <Text style={styles.galleryCaptionText}>Image {idx + 1}</Text>
-                                        <Text style={styles.galleryCaptionFindings}>
-                                            {findingsPerImage[idx] || 0} finding{(findingsPerImage[idx] || 0) !== 1 ? 's' : ''}
-                                        </Text>
-                                    </View>
-                                </View>
-                            ))}
+                        <SectionHeader title="Site Overview" />
+                        <View style={{ borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#e2e8f0', height: 580 }}>
+                            <Image src={images[overviewImageIndex]} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </View>
+                        {imageCoords?.[overviewImageIndex] && (
+                            <View style={{ marginTop: 8, flexDirection: 'row', gap: 16 }}>
+                                <Text style={{ fontSize: 7, color: COLORS.textMuted }}>
+                                    Coordinates: {imageCoords[overviewImageIndex].lat.toFixed(6)}, {imageCoords[overviewImageIndex].lng.toFixed(6)}
+                                </Text>
+                                {imageDates?.[overviewImageIndex] && (
+                                    <Text style={{ fontSize: 7, color: COLORS.textMuted }}>
+                                        Captured: {imageDates[overviewImageIndex]}
+                                    </Text>
+                                )}
+                            </View>
+                        )}
                     </View>
                     <PageFooter date={reportDateShort} />
                 </Page>
@@ -1022,7 +1011,7 @@ export const ReportDocument = ({ jobData, analysisResult, images, imageDates,
                 return (
                     <Page key={damage.id || `finding-${index}`} size="A4" style={styles.page}>
                         <PageHeader title={jobData.title} jobId={jobData.id} />
-                        <View style={styles.content}>
+                        <View style={styles.content} wrap={false}>
                             {/* Finding Header */}
                             <View style={styles.findingHeader}>
                                 <View style={{ flex: 1 }}>
@@ -1218,6 +1207,33 @@ export const ReportDocument = ({ jobData, analysisResult, images, imageDates,
                     </Page>
                 );
             })}
+
+            {/* ═══════════════════════ IMAGE GALLERY ═══════════════════════ */}
+            {images.length > 1 && (
+                <Page size="A4" style={styles.page}>
+                    <PageHeader title={jobData.title} jobId={jobData.id} />
+                    <View style={styles.content}>
+                        <SectionHeader title="Survey Images" />
+                        <Text style={styles.sectionSubtitle}>
+                            {images.length} images captured during inspection flight
+                        </Text>
+                        <View style={styles.galleryGrid}>
+                            {images.map((img, idx) => (
+                                <View key={`gallery-${idx}`} style={styles.galleryItem}>
+                                    <Image src={img} style={styles.galleryImage} />
+                                    <View style={styles.galleryCaption}>
+                                        <Text style={styles.galleryCaptionText}>Image {idx + 1}</Text>
+                                        <Text style={styles.galleryCaptionFindings}>
+                                            {findingsPerImage[idx] || 0} finding{(findingsPerImage[idx] || 0) !== 1 ? 's' : ''}
+                                        </Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                    <PageFooter date={reportDateShort} />
+                </Page>
+            )}
 
             {/* ═══════════════════════ DISCLAIMER PAGE ═══════════════════════ */}
             <Page size="A4" style={styles.page}>

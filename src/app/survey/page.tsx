@@ -26,6 +26,7 @@ import {
     FileText,
     CheckCircle2,
     AlertCircle,
+    Trash2,
     Download,
     Info,
     MapPin,
@@ -811,11 +812,24 @@ export default function SurveyPage() {
                                     <div className="grid gap-12">
                                         {analysisResult.damages.map((damage: any, i: number) => (
                                             <motion.div
-                                                key={i}
+                                                key={damage.id || i}
                                                 ref={(el: any) => { findingRefs.current[i] = el; }}
                                                 layout
                                                 className="grid lg:grid-cols-[1fr,450px] gap-8 p-8 rounded-[32px] border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all relative group"
                                             >
+                                                {/* Delete Finding Button */}
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm(`Remove finding "${damage.title}" from the report?`)) {
+                                                            const newDamages = analysisResult.damages.filter((_: any, idx: number) => idx !== i);
+                                                            setAnalysisResult({ ...analysisResult, damages: newDamages });
+                                                        }
+                                                    }}
+                                                    className="absolute top-4 right-4 z-10 size-9 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-500/30 hover:scale-110 active:scale-95 transition-all"
+                                                    title="Remove this finding from the report"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
                                                 {/* Visual Preview */}
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between mb-2">
