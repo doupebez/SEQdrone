@@ -371,6 +371,7 @@ export interface Issue {
     priority: 'critical' | 'high' | 'medium' | 'low';
     category: 'bug' | 'feature' | 'improvement' | 'task';
     module?: string;
+    screenshot?: string;
     created_at: string;
     updated_at: string;
 }
@@ -399,6 +400,7 @@ export const issueStorage = {
             priority: row.priority,
             category: row.category,
             module: row.module,
+            screenshot: row.screenshot || undefined,
             created_at: row.created_at,
             updated_at: row.updated_at,
         }));
@@ -419,6 +421,7 @@ export const issueStorage = {
                 priority: issue.priority,
                 category: issue.category,
                 module: issue.module || null,
+                screenshot: issue.screenshot || null,
             });
 
         if (error) {

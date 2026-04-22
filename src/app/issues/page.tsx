@@ -31,7 +31,10 @@ import {
     MinusCircle,
     AlertTriangle,
     Brain,
-    XCircle
+    XCircle,
+    ImagePlus,
+    Image as ImageIcon,
+    Maximize2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/AuthProvider';
@@ -87,7 +90,10 @@ export default function IssuesPage() {
     const [newPriority, setNewPriority] = useState<Issue['priority']>('medium');
     const [newCategory, setNewCategory] = useState<Issue['category']>('bug');
     const [newModule, setNewModule] = useState('');
+    const [newScreenshot, setNewScreenshot] = useState<string | null>(null);
     const titleInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user) return;
@@ -108,6 +114,16 @@ export default function IssuesPage() {
         setIsLoading(false);
     };
 
+    const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setNewScreenshot(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleCreateIssue = async () => {
         if (!user || !newTitle.trim()) return;
         await issueStorage.create({
@@ -117,12 +133,14 @@ export default function IssuesPage() {
             category: newCategory,
             status: 'open',
             module: newModule.trim() || undefined,
+            screenshot: newScreenshot || undefined,
         }, user.id);
         setNewTitle('');
         setNewDescription('');
         setNewPriority('medium');
         setNewCategory('bug');
         setNewModule('');
+        setNewScreenshot(null);
         setShowNewForm(false);
         loadIssues();
     };
@@ -316,6 +334,41 @@ export default function IssuesPage() {
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
                                     />
                                 </div>
+                            </div>
+
+                            {/* Screenshot Upload */}
+                            <div>
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Screenshot (optional)</label>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleScreenshotUpload}
+                                    className="hidden"
+                                />
+                                {newScreenshot ? (
+                                    <div className="relative group inline-block">
+                                        <img
+                                            src={newScreenshot}
+                                            alt="Screenshot preview"
+                                            className="h-32 rounded-xl border border-white/10 object-cover"
+                                        />
+                                        <button
+                                            onClick={() => setNewScreenshot(null)}
+                                            className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-red-500/80 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X className="size-3" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-dashed border-white/10 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-white/[0.06] transition-all"
+                                    >
+                                        <ImagePlus className="size-4" />
+                                        Attach screenshot or image
+                                    </button>
+                                )}
                             </div>
 
                             <div className="flex justify-end gap-3 pt-2">
@@ -550,6 +603,24 @@ export default function IssuesPage() {
                                                     <p className="text-sm text-muted-foreground/40 italic">No description provided.</p>
                                                 )}
 
+                                                {/* Screenshot */}
+                                                {issue.screenshot && (
+                                                    <div className="relative group">
+                                                        <img
+                                                            src={issue.screenshot}
+                                                            alt="Issue screenshot"
+                                                            className="max-h-64 rounded-xl border border-white/10 object-contain bg-black/30 cursor-pointer hover:border-primary/30 transition-all"
+                                                            onClick={() => setLightboxImage(issue.screenshot!)}
+                                                        />
+                                                        <button
+                                                            onClick={() => setLightboxImage(issue.screenshot!)}
+                                                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                                                        >
+                                                            <Maximize2 className="size-3.5" />
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                                 {/* Meta Row */}
                                                 <div className="flex items-center gap-4 text-[10px] text-muted-foreground/60">
                                                     <span className="flex items-center gap-1">
@@ -605,6 +676,27 @@ export default function IssuesPage() {
                     </div>
                 )}
             </div>
+
+            {/* ──── Lightbox ──── */}
+            {lightboxImage && (
+                <div
+                    className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-8 animate-in fade-in duration-200 cursor-pointer"
+                    onClick={() => setLightboxImage(null)}
+                >
+                    <button
+                        className="absolute top-6 right-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                        onClick={() => setLightboxImage(null)}
+                    >
+                        <X className="size-5" />
+                    </button>
+                    <img
+                        src={lightboxImage}
+                        alt="Screenshot full view"
+                        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </div>
     );
 }

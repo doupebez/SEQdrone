@@ -155,6 +155,7 @@ CREATE TABLE IF NOT EXISTS issues (
   priority TEXT NOT NULL DEFAULT 'medium',
   category TEXT NOT NULL DEFAULT 'bug',
   module TEXT,
+  screenshot TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
