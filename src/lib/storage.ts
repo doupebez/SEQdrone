@@ -360,3 +360,86 @@ export const trainingStorage = {
         if (error) console.error('Failed to delete rule:', error);
     }
 };
+
+// ──── Issue Tracker Types ────
+
+export interface Issue {
+    id: string;
+    title: string;
+    description?: string;
+    status: 'open' | 'in_progress' | 'resolved' | 'closed';
+    priority: 'critical' | 'high' | 'medium' | 'low';
+    category: 'bug' | 'feature' | 'improvement' | 'task';
+    module?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+// ──── Issue Storage (Supabase) ────
+
+export const issueStorage = {
+    getAll: async (userId: string): Promise<Issue[]> => {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('issues')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Failed to fetch issues:', error);
+            return [];
+        }
+
+        return (data || []).map(row => ({
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            status: row.status,
+            priority: row.priority,
+            category: row.category,
+            module: row.module,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+        }));
+    },
+
+    create: async (issue: Omit<Issue, 'id' | 'created_at' | 'updated_at'>, userId: string) => {
+        const supabase = createClient();
+        const id = `issue-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+        const { error } = await supabase
+            .from('issues')
+            .insert({
+                id,
+                user_id: userId,
+                title: issue.title,
+                description: issue.description || null,
+                status: issue.status,
+                priority: issue.priority,
+                category: issue.category,
+                module: issue.module || null,
+            });
+
+        if (error) {
+            console.error('Failed to create issue:', error);
+            throw error;
+        }
+    },
+
+    updateStatus: async (id: string, status: Issue['status']) => {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('issues')
+            .update({ status, updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) console.error('Failed to update issue status:', error);
+    },
+
+    remove: async (id: string) => {
+        const supabase = createClient();
+        const { error } = await supabase.from('issues').delete().eq('id', id);
+        if (error) console.error('Failed to delete issue:', error);
+    },
+};

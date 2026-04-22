@@ -142,3 +142,31 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 --   FOR SELECT USING (bucket_id = 'survey-images');
 -- CREATE POLICY "Users can delete own images" ON storage.objects
 --   FOR DELETE USING (auth.uid()::text = (storage.foldername(name))[1] AND bucket_id = 'survey-images');
+
+-- =============================================================
+-- 6. Issues (Bug & Feature Tracker)
+-- =============================================================
+CREATE TABLE IF NOT EXISTS issues (
+  id TEXT PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'open',
+  priority TEXT NOT NULL DEFAULT 'medium',
+  category TEXT NOT NULL DEFAULT 'bug',
+  module TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE issues ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own issues"
+  ON issues FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own issues"
+  ON issues FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own issues"
+  ON issues FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own issues"
+  ON issues FOR DELETE USING (auth.uid() = user_id);
+

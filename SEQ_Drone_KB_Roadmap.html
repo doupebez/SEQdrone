@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEQ Drone Inspections — AI Platform KB & Roadmap</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+        :root {
+            --brand: #0f74c5;
+            --brand-dark: #0a528c;
+            --brand-light: #e6f0f9;
+            --dark: #0c1220;
+            --dark-surface: #111827;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --bg: #ffffff;
+            --bg-alt: #f8fafc;
+            --critical: #ef4444;
+            --high: #f97316;
+            --medium: #eab308;
+            --low: #22c55e;
+            --purple: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-primary);
+            background: var(--bg);
+            font-size: 10pt;
+            line-height: 1.6;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        @page {
+            size: A4;
+            margin: 20mm 18mm 25mm 18mm;
+        }
+
+        @media print {
+            body { font-size: 9pt; }
+            .cover-page { page-break-after: always; margin: -20mm -18mm; padding: 20mm 18mm; width: calc(100% + 36mm); min-height: calc(297mm - 0mm); }
+            .page-break { page-break-before: always; }
+            .no-print { display: none !important; }
+            h2 { page-break-after: avoid; }
+            h3 { page-break-after: avoid; }
+            table { page-break-inside: avoid; }
+            .card { page-break-inside: avoid; }
+        }
+
+        /* ──── Cover Page ──── */
+        .cover-page {
+            background: var(--dark);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--brand);
+        }
+
+        .cover-brand {
+            font-size: 11pt;
+            font-weight: 800;
+            color: var(--brand);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .cover-tagline {
+            font-size: 8pt;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .cover-divider {
+            width: 60px;
+            height: 2px;
+            background: var(--brand);
+            margin: 30px 0;
+        }
+
+        .cover-title {
+            font-size: 32pt;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 12px;
+        }
+
+        .cover-subtitle {
+            font-size: 12pt;
+            color: var(--text-muted);
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        .cover-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            margin-top: 40px;
+        }
+
+        .cover-meta-item {
+            padding: 12px 20px 12px 0;
+            border-top: 1px solid #1e293b;
+        }
+
+        .cover-meta-label {
+            font-size: 7pt;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .cover-meta-value {
+            font-size: 10pt;
+            font-weight: 700;
+        }
+
+        .cover-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid #1e293b;
+            padding-top: 16px;
+        }
+
+        .cover-footer-text {
+            font-size: 7pt;
+            color: var(--text-muted);
+        }
+
+        .cover-confidential {
+            font-size: 7pt;
+            color: var(--critical);
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ──── Content Pages ──── */
+        .content {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        .part-header {
+            background: linear-gradient(135deg, var(--dark) 0%, #1a2332 100%);
+            color: white;
+            padding: 40px 36px;
+            margin: 40px -18mm;
+            padding-left: calc(18mm + 36px);
+            padding-right: calc(18mm + 36px);
+        }
+
+        @media print {
+            .part-header {
+                margin: 0 -18mm;
+                padding-left: calc(18mm);
+                padding-right: calc(18mm);
+            }
+        }
+
+        .part-header .part-label {
+            font-size: 8pt;
+            font-weight: 800;
+            color: var(--brand);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .part-header h1 {
+            font-size: 24pt;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .part-header p {
+            font-size: 10pt;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        h2 {
+            font-size: 16pt;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-top: 32px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2::before {
+            content: '';
+            width: 4px;
+            height: 22px;
+            background: var(--brand);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        h3 {
+            font-size: 12pt;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 24px;
+            margin-bottom: 10px;
+        }
+
+        h4 {
+            font-size: 10pt;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        /* ──── Tables ──── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 20px 0;
+            font-size: 9pt;
+        }
+
+        thead th {
+            background: #f1f5f9;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 7pt;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border);
+        }
+
+        tbody td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: var(--text-secondary);
+        }
+
+        tbody tr:hover { background: #fafbfc; }
+
+        /* ──── Cards ──── */
+        .card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+
+        .card.blue {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .card.amber {
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        .card.green {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .card.red {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .card-title {
+            font-size: 8pt;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .card.blue .card-title { color: #2563eb; }
+        .card.amber .card-title { color: #d97706; }
+        .card.green .card-title { color: #16a34a; }
+        .card.red .card-title { color: #dc2626; }
+
+        /* ──── Lists ──── */
+        ul, ol {
+            padding-left: 20px;
+            margin: 8px 0 12px 0;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        li strong {
+            color: var(--text-primary);
+        }
+
+        /* ──── Phase Blocks ──── */
+        .phase-block {
+            border-left: 4px solid var(--brand);
+            padding: 20px 24px;
+            margin: 16px 0;
+            background: var(--bg-alt);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .phase-label {
+            font-size: 8pt;
+            font-weight: 800;
+            color: var(--brand);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .phase-title {
+            font-size: 14pt;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .phase-timeline {
+            font-size: 9pt;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* ──── Priority Table ──── */
+        .priority-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 8pt;
+            font-weight: 700;
+            color: white;
+        }
+
+        .priority-badge.gold { background: #f59e0b; }
+        .priority-badge.silver { background: #94a3b8; }
+        .priority-badge.bronze { background: #d97706; }
+
+        /* ──── Severity Dots ──── */
+        .severity-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .severity-dot.critical { background: var(--critical); }
+        .severity-dot.high { background: var(--high); }
+        .severity-dot.medium { background: var(--medium); }
+        .severity-dot.low { background: var(--low); }
+
+        /* ──── Step indicators ──── */
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--brand);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 10pt;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            margin-top: 4px;
+            color: var(--text-primary);
+        }
+
+        /* ──── Feature cards ──── */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .feature-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            background: var(--bg-alt);
+        }
+
+        .feature-card h4 {
+            margin-top: 0;
+            font-size: 10pt;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 9pt;
+            margin: 0;
+        }
+
+        /* ──── Workflow diagram ──── */
+        .workflow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .workflow-step {
+            background: var(--brand);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .workflow-arrow {
+            color: var(--text-muted);
+            font-size: 14pt;
+            font-weight: 300;
+        }
+
+        /* ──── TOC ──── */
+        .toc {
+            columns: 2;
+            column-gap: 30px;
+        }
+
+        .toc-section {
+            break-inside: avoid;
+            margin-bottom: 16px;
+        }
+
+        .toc-section h3 {
+            font-size: 9pt;
+            font-weight: 800;
+            color: var(--brand);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin: 0 0 6px 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 4px;
+        }
+
+        .toc-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc-section li {
+            font-size: 9pt;
+            color: var(--text-secondary);
+            padding: 2px 0;
+        }
+
+        /* ──── Print Button ──── */
+        .print-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--dark);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        }
+
+        .print-btn {
+            background: var(--brand);
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 8px;
+            font-size: 10pt;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .print-btn:hover { opacity: 0.9; }
+
+        .print-hint {
+            color: var(--text-muted);
+            font-size: 9pt;
+        }
+
+        /* Spacer for print bar */
+        .bottom-spacer { height: 60px; }
+    </style>
+</head>
+<body>
+
+<!-- Print Bar -->
+<div class="print-bar no-print">
+    <span class="print-hint">To save as PDF: Click the button below, then select <strong>"Save as PDF"</strong> as the destination</span>
+    <button class="print-btn" onclick="window.print()">⬇ Save as PDF</button>
+</div>
+
+<!-- ═══════════════════════ COVER PAGE ═══════════════════════ -->
+<div class="cover-page">
+    <div>
+        <div class="cover-brand">SEQ Drone Inspections</div>
+        <div class="cover-tagline">Artificial Intelligence Division</div>
+        <div class="cover-divider"></div>
+        <div class="cover-title">AI Platform<br>User Knowledge Base<br>& Development Roadmap</div>
+        <div class="cover-subtitle">
+            Comprehensive documentation of the SEQ Drone Inspections AI-powered inspection platform — covering all current features, workflows, and the strategic development roadmap.
+        </div>
+    </div>
+    <div>
+        <div class="cover-meta">
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Prepared For</div>
+                <div class="cover-meta-value">SEQ Drone Inspections Management</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Document Version</div>
+                <div class="cover-meta-value">1.0</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Date</div>
+                <div class="cover-meta-value">22 April 2026</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Production URL</div>
+                <div class="cover-meta-value">se-qdrone-vpjw-new.vercel.app</div>
+            </div>
+        </div>
+        <div class="cover-footer">
+            <div class="cover-footer-text">Prepared by Antigravity AI Development</div>
+            <div class="cover-confidential">Confidential</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ TABLE OF CONTENTS ═══════════════════════ -->
+<div class="page-break"></div>
+<div class="content">
+    <h2>Table of Contents</h2>
+    <div class="toc">
+        <div class="toc-section">
+            <h3>Part 1 — User Knowledge Base</h3>
+            <ul>
+                <li>1. Platform Overview & Technology Stack</li>
+                <li>2. User Authentication</li>
+                <li>3. Core Workflows</li>
+                <li>&nbsp;&nbsp;&nbsp;3.1 Standard Inspection Survey</li>
+                <li>&nbsp;&nbsp;&nbsp;3.2 Height Safety Inspection</li>
+                <li>&nbsp;&nbsp;&nbsp;3.3 Dashboard & Portfolio Management</li>
+                <li>&nbsp;&nbsp;&nbsp;3.4 AI Training Console</li>
+                <li>4. Data Architecture</li>
+                <li>5. Known Limitations</li>
+            </ul>
+        </div>
+        <div class="toc-section">
+            <h3>Part 2 — Development Roadmap</h3>
+            <ul>
+                <li>Phase 1 — Quick Wins (1–2 weeks)</li>
+                <li>Phase 2 — Core Enhancements (3–4 weeks)</li>
+                <li>Phase 3 — Scale & Automate (4–6 weeks)</li>
+                <li>Phase 4 — Intelligence & Analytics (6–8 weeks)</li>
+                <li>Phase 5 — Enterprise Features (8–12 weeks)</li>
+                <li>Recommended Priority Order</li>
+                <li>Technical Debt & Maintenance</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ PART 1 ═══════════════════════ -->
+<div class="page-break"></div>
+<div class="part-header">
+    <div class="part-label">Part 1</div>
+    <h1>User Knowledge Base</h1>
+    <p>Complete documentation of all platform features and workflows.</p>
+</div>
+
+<div class="content">
+
+    <!-- 1. Platform Overview -->
+    <h2>1. Platform Overview</h2>
+    <p>The SEQ Drone Inspections AI Platform is a web-based application that enables drone pilots and operators to upload inspection imagery, run AI-powered defect analysis, and generate professional PDF inspection reports — all from a single dashboard.</p>
+
+    <h3>Technology Stack</h3>
+    <table>
+        <thead>
+            <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Frontend</strong></td><td>Next.js 16 + React 19</td><td>Server-rendered web application</td></tr>
+            <tr><td><strong>Styling</strong></td><td>Tailwind CSS 4</td><td>Dark-themed, modern UI</td></tr>
+            <tr><td><strong>AI Engine</strong></td><td>Google Gemini 2.0 Flash</td><td>Image analysis & defect detection</td></tr>
+            <tr><td><strong>Database</strong></td><td>Supabase (PostgreSQL)</td><td>Survey records, training data, auth</td></tr>
+            <tr><td><strong>Authentication</strong></td><td>Supabase Auth</td><td>Email/password login with session management</td></tr>
+            <tr><td><strong>PDF Reports</strong></td><td>React-PDF</td><td>Professional A4 inspection reports</td></tr>
+            <tr><td><strong>Animations</strong></td><td>Framer Motion</td><td>Smooth transitions and micro-animations</td></tr>
+            <tr><td><strong>EXIF Parsing</strong></td><td>exifr</td><td>GPS, altitude, and drone metadata extraction</td></tr>
+            <tr><td><strong>Hosting</strong></td><td>Vercel (Edge Functions)</td><td>Serverless production deployment</td></tr>
+        </tbody>
+    </table>
+
+    <!-- 2. Authentication -->
+    <h2>2. User Authentication</h2>
+    <p>Users access the platform via email + password authentication. New accounts are created through the Sign Up page, and returning users log in via the Login page.</p>
+
+    <h3>Protected Routes</h3>
+    <table>
+        <thead>
+            <tr><th>Route</th><th>Page</th><th>Access</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>/dashboard</code></td><td>Client Intelligence Hub</td><td>🔒 Authenticated</td></tr>
+            <tr><td><code>/survey</code></td><td>New Survey / Inspection</td><td>🔒 Authenticated</td></tr>
+            <tr><td><code>/training</code></td><td>AI Training Console</td><td>🔒 Authenticated</td></tr>
+            <tr><td><code>/</code></td><td>Public Landing Page</td><td>🌐 Public</td></tr>
+        </tbody>
+    </table>
+    <p>Sessions are managed via Supabase JWT cookies. Middleware validates sessions on every page load. Sign out clears the session and returns to login.</p>
+
+    <!-- 3. Core Workflows -->
+    <div class="page-break"></div>
+    <h2>3. Core Workflows</h2>
+
+    <h3>3.1 Standard Inspection Survey (Drone + AI)</h3>
+    <p>This is the primary workflow for roof, solar, facade, bridge, tower, turbine, and tank inspections.</p>
+
+    <div class="workflow">
+        <span class="workflow-step">Upload Images</span>
+        <span class="workflow-arrow">→</span>
+        <span class="workflow-step">Job Context</span>
+        <span class="workflow-arrow">→</span>
+        <span class="workflow-step">AI Analysis</span>
+        <span class="workflow-arrow">→</span>
+        <span class="workflow-step">Review & Refine</span>
+        <span class="workflow-arrow">→</span>
+        <span class="workflow-step">Generate PDF</span>
+    </div>
+
+    <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <h4>Upload Images</h4>
+            <ul>
+                <li>Drag & drop or click to upload high-resolution drone images (JPG/PNG)</li>
+                <li>Multiple images supported (up to 50 per survey)</li>
+                <li>System automatically extracts <strong>EXIF metadata</strong>: GPS coordinates, altitude, pitch, heading, timestamp, and drone model</li>
+                <li><strong>"Set as Overview"</strong> — select any image to feature on the report cover page</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <h4>Job Context</h4>
+            <ul>
+                <li>Select <strong>Asset Type</strong> from 8 categories: Roof, Solar Panels, Building Facade, Bridge, Comm Tower, Wind Turbine, Water Tank, Height Safety</li>
+                <li>Enter job title/reference, client name, and asset location</li>
+                <li>Optional <strong>AI Prompt</strong> — free-text instructions for the AI (e.g., "Look for cracked tiles and hail damage on the north side")</li>
+                <li><strong>Existing Asset Detection</strong> — if the asset has been surveyed before, quick-select buttons auto-populate details for chronological tracking</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+            <h4>AI Analysis</h4>
+            <p>Each image is processed individually through Google Gemini 2.0 Flash. For each image the AI:</p>
+            <ul>
+                <li>Describes the visible section of the asset</li>
+                <li>Identifies all defects, damage, and maintenance issues</li>
+                <li>Classifies each by type, severity, and component</li>
+                <li>Pins the exact defect location using focal-point coordinates</li>
+                <li>Provides professional descriptions and actionable recommendations with timeframes</li>
+            </ul>
+            <p>If Training Rules exist, they are automatically injected into the AI's system prompt for improved accuracy.</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+            <h4>Review & Refine</h4>
+            <p>Users can review, edit, and clean up findings before generating the report:</p>
+            <ul>
+                <li><strong>Browse findings</strong> — each card shows title, severity, confidence score, description, recommendation, and source image</li>
+                <li><strong>Delete false positives</strong> — hover to reveal the trash icon, click and confirm to remove</li>
+                <li><strong>Visual/Thermal toggle</strong> — simulated thermal vision mode</li>
+                <li><strong>Image Markup</strong> — draw safe-access or exclusion-zone paths, add text notes, record thermal anomaly temperatures</li>
+                <li><strong>Measurement Tools</strong> — calibrate a scale reference, then draw measurement lines with auto-calculated real-world distances</li>
+                <li><strong>Geospatial Site Map</strong> — if GPS data exists, a tactical map shows flight path, camera positions, and finding locations</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">5</div>
+        <div class="step-content">
+            <h4>Generate Report</h4>
+            <p>Professional A4 PDF report includes:</p>
+            <ul>
+                <li>Branded cover page with health score and client details</li>
+                <li>Executive summary with severity breakdown chart</li>
+                <li>Full-page site overview image</li>
+                <li>Image gallery with finding counts per image</li>
+                <li>Detailed finding pages with annotated images, zoomed crops, metadata, and colour-coded recommendations</li>
+                <li>Survey images appendix</li>
+                <li>Branded header/footer on every page with page numbers</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 3.2 Height Safety -->
+    <div class="page-break"></div>
+    <h3>3.2 Height Safety Inspection (Manual Entry)</h3>
+    <p>A dedicated workflow for height safety equipment audits — anchor points, static lines, davit systems. This workflow <strong>bypasses image upload and AI analysis</strong> entirely.</p>
+
+    <div class="card blue">
+        <div class="card-title">Key Difference</div>
+        <p style="margin:0">Height Safety inspections are fully manual-entry. The operator records inspector details, equipment registers, and defects directly in the form without AI involvement.</p>
+    </div>
+
+    <h4>Inspector & Site Tab</h4>
+    <ul>
+        <li>Inspector name, licence/cert number, company</li>
+        <li>Building description</li>
+        <li>Inspection date and next-due date (auto-populated from job context)</li>
+    </ul>
+
+    <h4>Equipment Register Tab</h4>
+    <ul>
+        <li>Equipment grouped by <strong>Location</strong> (e.g., "Roof", "Level 25", "Carpark P1")</li>
+        <li>Per-item: ID, Equipment Type, Fixing Method, kN Rating, Test Method, Rope Access, Fall Arrest, Result (Pass/Fail/No Access)</li>
+        <li><strong>Bulk duplicate</strong> — instantly create multiple copies from a template row</li>
+        <li>Summary stats bar: Total / Pass / Fail / No Access</li>
+    </ul>
+
+    <h4>Defects Tab</h4>
+    <ul>
+        <li>Equipment IDs affected, location, risk rating (Low → Extreme)</li>
+        <li>Description, photo upload, safe-for-temporary-use flag</li>
+        <li>Resolution / recommendation</li>
+        <li>Conclusion & recommendations text area</li>
+    </ul>
+
+    <h4>Height Safety PDF Report Includes:</h4>
+    <ul>
+        <li>Branded cover page with pass/fail/no-access summary</li>
+        <li>Australian Standards references (AS 1891, AS 5532, ISO 22846)</li>
+        <li>Certification requirements, OHS legislation, risk assessment methodology</li>
+        <li>Equipment registers by location (paginated at 27 rows per page)</li>
+        <li>Defect detail pages with photos, risk ratings, and resolutions</li>
+    </ul>
+
+    <!-- 3.3 Dashboard -->
+    <div class="page-break"></div>
+    <h3>3.3 Dashboard & Portfolio Management</h3>
+    <p>The Client Intelligence Hub (<code>/dashboard</code>) provides an executive portfolio view of all completed inspections.</p>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h4>📊 Stats Panel</h4>
+            <p>Total Surveys, Critical Defects, Unique Clients — at-a-glance metrics.</p>
+        </div>
+        <div class="feature-card">
+            <h4>🎯 Site Integrity Score</h4>
+            <p>Animated circular gauge showing average health across all surveyed assets.</p>
+        </div>
+        <div class="feature-card">
+            <h4>📈 Priority Distribution</h4>
+            <p>Bar chart of top 3 defect types by percentage across the portfolio.</p>
+        </div>
+        <div class="feature-card">
+            <h4>🏢 Asset-Centric View</h4>
+            <p>Surveys grouped by asset with trend indicators (Improving / Declining / Stable).</p>
+        </div>
+    </div>
+
+    <h4>Survey Cards</h4>
+    <ul>
+        <li>Thumbnail image, status badge (Finalized/Draft), observation date</li>
+        <li>Site Health Index progress bar</li>
+        <li><strong>Review Timeline</strong> — re-open the full survey</li>
+        <li><strong>Delete</strong> — permanently remove (with confirmation)</li>
+        <li><strong>Search</strong> — filter by client, location, or reference</li>
+    </ul>
+
+    <!-- 3.4 Training Console -->
+    <h3>3.4 AI Training Console</h3>
+    <p>The Training Console (<code>/training</code>) creates a feedback loop that makes the AI smarter with every inspection.</p>
+
+    <div class="workflow">
+        <span class="workflow-step">Review Past Analyses</span>
+        <span class="workflow-arrow">→</span>
+        <span class="workflow-step">Submit Feedback</span>
+        <span class="workflow-arrow">→</span>
+        <span class="workflow-step">Generate Rules</span>
+        <span class="workflow-arrow">→</span>
+        <span class="workflow-step">AI Improves</span>
+    </div>
+
+    <h4>Feedback Categories</h4>
+    <ul>
+        <li><span class="severity-dot critical"></span><strong>False Positive</strong> — AI detected something that isn't a defect</li>
+        <li><span class="severity-dot high"></span><strong>Missed Defect</strong> — AI missed a visible issue</li>
+        <li><span class="severity-dot medium"></span><strong>Wrong Severity</strong> — severity rating was incorrect</li>
+        <li><span class="severity-dot" style="background:var(--purple)"></span><strong>Wrong Category</strong> — defect type was misclassified</li>
+        <li><span class="severity-dot low"></span><strong>Good Detection</strong> — positive reinforcement</li>
+        <li><span class="severity-dot" style="background:#3b82f6"></span><strong>General Note</strong> — any other observation</li>
+    </ul>
+
+    <p>Clicking <strong>"Generate Rules from Feedback"</strong> sends all feedback to Gemini, which distills it into concise, actionable rules that are <strong>automatically injected into every future analysis</strong>.</p>
+
+    <p>Operators can also <strong>add manual rules</strong> directly, and toggle rules on/off without deleting them.</p>
+
+    <!-- 4. Data Architecture -->
+    <div class="page-break"></div>
+    <h2>4. Data Architecture</h2>
+
+    <h3>Database Tables (Supabase)</h3>
+    <table>
+        <thead>
+            <tr><th>Table</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>surveys</strong></td><td>All survey records — job data, analysis results, images, health scores</td></tr>
+            <tr><td><strong>training_feedback</strong></td><td>Operator corrections and feedback entries for past analyses</td></tr>
+            <tr><td><strong>training_rules</strong></td><td>Distilled AI training rules with active/inactive toggle</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Key Data Objects</h3>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h4>Survey Record</h4>
+            <p>id, date, status (Draft/Finalized), jobData (title, client, location, type, assetId), analysisResult (summary, damages[], healthScore), thumbnail, findingCount</p>
+        </div>
+        <div class="feature-card">
+            <h4>Damage / Finding</h4>
+            <p>id, title, severity, defectType, conditionRating, description, recommendation, component, areaLocation, estimatedSize, focalPoint, confidenceScore, imageIndex, annotations</p>
+        </div>
+        <div class="feature-card">
+            <h4>Height Safety Inspection</h4>
+            <p>Inspector details, building info, dates, equipment[] (type, fixing, kN, test, result), defects[] (risk, description, photo, resolution), conclusion</p>
+        </div>
+        <div class="feature-card">
+            <h4>Training Rule</h4>
+            <p>id, rule text, source (which feedback it came from), active toggle, createdAt timestamp</p>
+        </div>
+    </div>
+
+    <!-- 5. Known Limitations -->
+    <h2>5. Known Limitations</h2>
+    <table>
+        <thead>
+            <tr><th>Area</th><th>Current Limitation</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Mobile</strong></td><td>UI is desktop-optimised; responsive but not mobile-first</td></tr>
+            <tr><td><strong>Image Size</strong></td><td>Large batches (30+ high-res) may approach Vercel's 5-minute function timeout</td></tr>
+            <tr><td><strong>Offline</strong></td><td>No offline capability — requires internet connection</td></tr>
+            <tr><td><strong>User Roles</strong></td><td>Single role — no admin/viewer/client distinction</td></tr>
+            <tr><td><strong>Client Portal</strong></td><td>Clients cannot self-serve; reports must be delivered manually</td></tr>
+            <tr><td><strong>Notifications</strong></td><td>No email or push notifications</td></tr>
+            <tr><td><strong>Image Storage</strong></td><td>Thumbnails stored as base64 in DB; no external image CDN</td></tr>
+            <tr><td><strong>Comparison</strong></td><td>No automated before/after comparison between inspections</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ═══════════════════════ PART 2 ═══════════════════════ -->
+<div class="page-break"></div>
+<div class="part-header">
+    <div class="part-label">Part 2</div>
+    <h1>Development Roadmap</h1>
+    <p>Strategic feature roadmap organised by phase, effort, and business impact.</p>
+</div>
+
+<div class="content">
+
+    <!-- Phase 1 -->
+    <div class="phase-block">
+        <div class="phase-label">Phase 1</div>
+        <div class="phase-title">Quick Wins</div>
+        <div class="phase-timeline">Estimated: 1–2 weeks</div>
+    </div>
+
+    <h3>1.1 Client Report Portal</h3>
+    <p><strong>Goal:</strong> Allow clients to view and download reports without operator involvement.</p>
+    <ul>
+        <li>Read-only dashboard filtered by client</li>
+        <li>Shareable link per survey (password-protected or magic link)</li>
+        <li>Download PDF directly from the portal</li>
+        <li>No login required for link-based access</li>
+    </ul>
+
+    <h3>1.2 Email Report Delivery</h3>
+    <p><strong>Goal:</strong> Send finalised reports directly to the client's email.</p>
+    <ul>
+        <li>"Email to Client" button on the review page</li>
+        <li>Auto-attach PDF as email attachment</li>
+        <li>Customisable email template with company branding</li>
+        <li>Delivery confirmation logging</li>
+    </ul>
+
+    <h3>1.3 Chronological Comparison Reports</h3>
+    <p><strong>Goal:</strong> Show side-by-side progression for repeat inspections.</p>
+    <ul>
+        <li>Auto-detect same-asset surveys via assetId (already in data model)</li>
+        <li>Health score trend chart over time</li>
+        <li>New / Resolved / Worsened finding indicators</li>
+        <li>Exportable comparison PDF</li>
+    </ul>
+
+    <h3>1.4 Bulk Image Compression</h3>
+    <p><strong>Goal:</strong> Speed up uploads and reduce processing time.</p>
+    <ul>
+        <li>Client-side resize before upload (4000px max width)</li>
+        <li>Compress to 80% quality JPEG, preserving EXIF</li>
+        <li>Show file size savings to user</li>
+    </ul>
+
+    <!-- Phase 2 -->
+    <div class="page-break"></div>
+    <div class="phase-block">
+        <div class="phase-label">Phase 2</div>
+        <div class="phase-title">Core Enhancements</div>
+        <div class="phase-timeline">Estimated: 3–4 weeks</div>
+    </div>
+
+    <h3>2.1 Real Thermal Imaging Support</h3>
+    <p><strong>Goal:</strong> Process actual thermal (IR) drone imagery alongside visual imagery.</p>
+    <ul>
+        <li>Upload both RGB and thermal images per survey point</li>
+        <li>AI analyses dual-spectrum data in context</li>
+        <li>Temperature gradient detection for solar panel hotspots</li>
+        <li>Side-by-side thermal/visual view and thermal data in reports</li>
+    </ul>
+
+    <h3>2.2 Job Scheduling & Calendar</h3>
+    <p><strong>Goal:</strong> Manage upcoming inspections and schedule follow-ups.</p>
+    <ul>
+        <li>Calendar view of past and upcoming inspections</li>
+        <li>Auto-schedule next-due dates from height safety reports</li>
+        <li>Email/push reminders for upcoming inspections</li>
+        <li>Recurring inspection templates</li>
+    </ul>
+
+    <h3>2.3 Report Templates & Customisation</h3>
+    <p><strong>Goal:</strong> Customise report branding and layout per client.</p>
+    <ul>
+        <li>Upload company logo for PDF reports</li>
+        <li>Configurable colour scheme and cover page text</li>
+        <li>Optional sections (hide/show recommendations, executive summary)</li>
+        <li>Custom disclaimer / terms and conditions</li>
+    </ul>
+
+    <h3>2.4 Enhanced Mobile Experience</h3>
+    <p><strong>Goal:</strong> Make the survey workflow usable from a tablet on-site.</p>
+    <ul>
+        <li>Responsive redesign for iPad/tablet</li>
+        <li>Camera integration for direct capture</li>
+        <li>Touch-friendly markup tools</li>
+        <li>Offline draft saving with sync</li>
+    </ul>
+
+    <!-- Phase 3 -->
+    <div class="page-break"></div>
+    <div class="phase-block">
+        <div class="phase-label">Phase 3</div>
+        <div class="phase-title">Scale & Automate</div>
+        <div class="phase-timeline">Estimated: 4–6 weeks</div>
+    </div>
+
+    <h3>3.1 Multi-Organisation Tenancy</h3>
+    <p><strong>Goal:</strong> Support multiple companies/teams using the same platform.</p>
+    <ul>
+        <li>Organisation accounts with team member management</li>
+        <li>Role-based access: <strong>Admin</strong>, <strong>Operator</strong>, <strong>Client</strong>, <strong>Reviewer</strong></li>
+        <li>Per-organisation branding and settings</li>
+        <li>Separate data isolation per organisation</li>
+    </ul>
+
+    <h3>3.2 Native Mobile App (PWA or React Native)</h3>
+    <ul>
+        <li>Progressive Web App with offline support</li>
+        <li>Push notifications, GPS auto-tag, camera-first workflow</li>
+        <li>Quick height safety entry with barcode/NFC scanning</li>
+    </ul>
+
+    <h3>3.3 Batch Processing Pipeline</h3>
+    <ul>
+        <li>Background job queue for 100+ image surveys</li>
+        <li>Progress notifications and automatic retry on failure</li>
+        <li>Parallel processing for speed</li>
+    </ul>
+
+    <h3>3.4 Image CDN & Storage</h3>
+    <ul>
+        <li>Move images from base64-in-DB to Supabase Storage or Cloudflare R2</li>
+        <li>WebP conversion and automatic thumbnailing</li>
+        <li>Dramatically reduced database size</li>
+    </ul>
+
+    <!-- Phase 4 -->
+    <div class="phase-block">
+        <div class="phase-label">Phase 4</div>
+        <div class="phase-title">Intelligence & Analytics</div>
+        <div class="phase-timeline">Estimated: 6–8 weeks</div>
+    </div>
+
+    <h3>4.1 Predictive Maintenance Engine</h3>
+    <ul>
+        <li>AI-powered deterioration forecasting across chronological inspections</li>
+        <li>Time-to-failure predictions and remaining useful life estimates</li>
+        <li>Auto-generated maintenance priority schedules</li>
+        <li>Cost estimation for recommended repairs</li>
+    </ul>
+
+    <h3>4.2 Portfolio Analytics Dashboard</h3>
+    <ul>
+        <li>Interactive charts: defect trends, health scores over time</li>
+        <li>Client and location-level aggregation</li>
+        <li>Exportable analytics reports (PDF or Excel)</li>
+    </ul>
+
+    <h3>4.3 Natural Language Search</h3>
+    <ul>
+        <li>"Show me all critical corrosion findings from the last 6 months"</li>
+        <li>Powered by Gemini with context from the survey database</li>
+    </ul>
+
+    <!-- Phase 5 -->
+    <div class="page-break"></div>
+    <div class="phase-block">
+        <div class="phase-label">Phase 5</div>
+        <div class="phase-title">Enterprise Features</div>
+        <div class="phase-timeline">Estimated: 8–12 weeks</div>
+    </div>
+
+    <h3>5.1 API & Integration Layer</h3>
+    <ul>
+        <li>REST API for survey data, findings, and reports</li>
+        <li>Integration with asset management systems (Fiix, UpKeep) and CRMs</li>
+        <li>Webhook notifications on survey completion</li>
+    </ul>
+
+    <h3>5.2 Compliance & Audit Trail</h3>
+    <ul>
+        <li>Full audit log, version history, digital signatures on reports</li>
+        <li>GDPR/privacy compliance and data retention policies</li>
+    </ul>
+
+    <h3>5.3 White-Label Solution</h3>
+    <ul>
+        <li>Fully customisable branding (logos, colours, domain)</li>
+        <li>Per-tenant configuration and custom report templates</li>
+        <li>SaaS licensing or revenue sharing model</li>
+    </ul>
+
+    <h3>5.4 Video & Livestream Analysis</h3>
+    <ul>
+        <li>Upload video, auto-extract key frames for analysis</li>
+        <li>Real-time analysis during live drone flights (DJI SDK)</li>
+        <li>Highlight reel generation for client presentations</li>
+    </ul>
+
+    <!-- Priority Table -->
+    <div class="page-break"></div>
+    <h2>Recommended Priority Order</h2>
+
+    <div class="card green">
+        <div class="card-title">Recommendation</div>
+        <p style="margin:0">Based on immediate business value and client impact, we recommend tackling features in this order. Phase 1 items deliver the most value with the least development effort.</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>#</th><th>Feature</th><th>Phase</th><th>Est. Effort</th><th>Business Impact</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><span class="priority-badge gold">1</span></td><td><strong>Client Report Portal</strong></td><td>1</td><td>3–5 days</td><td>⭐⭐⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge gold">2</span></td><td><strong>Email Report Delivery</strong></td><td>1</td><td>2–3 days</td><td>⭐⭐⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge gold">3</span></td><td><strong>Chronological Comparison</strong></td><td>1</td><td>4–5 days</td><td>⭐⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge silver">4</span></td><td><strong>Image CDN & Storage</strong></td><td>3</td><td>3–4 days</td><td>⭐⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge silver">5</span></td><td><strong>Report Templates</strong></td><td>2</td><td>5–7 days</td><td>⭐⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge silver">6</span></td><td><strong>Mobile Experience</strong></td><td>2</td><td>7–10 days</td><td>⭐⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge bronze">7</span></td><td><strong>Multi-Org Tenancy</strong></td><td>3</td><td>10–14 days</td><td>⭐⭐⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge bronze">8</span></td><td><strong>Job Scheduling</strong></td><td>2</td><td>5–7 days</td><td>⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge bronze">9</span></td><td><strong>Predictive Maintenance</strong></td><td>4</td><td>14–21 days</td><td>⭐⭐⭐⭐⭐</td></tr>
+            <tr><td><span class="priority-badge bronze">10</span></td><td><strong>API Integrations</strong></td><td>5</td><td>14–21 days</td><td>⭐⭐⭐⭐</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Technical Debt -->
+    <h2>Technical Debt & Maintenance</h2>
+
+    <div class="card amber">
+        <div class="card-title">⚠ Important</div>
+        <p style="margin:0">These items should be addressed alongside feature development to maintain platform stability.</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>Item</th><th>Description</th><th>Priority</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Image Storage</strong></td><td>Move from base64-in-DB to Supabase Storage / CDN</td><td>🔴 High</td></tr>
+            <tr><td><strong>Error Monitoring</strong></td><td>Add Sentry or similar for production error tracking</td><td>🔴 High</td></tr>
+            <tr><td><strong>Automated Testing</strong></td><td>Add end-to-end tests for survey workflow</td><td>🟡 Medium</td></tr>
+            <tr><td><strong>API Rate Limiting</strong></td><td>Protect /api/analyze endpoint from abuse</td><td>🟡 Medium</td></tr>
+            <tr><td><strong>Accessibility</strong></td><td>WCAG 2.1 AA compliance audit</td><td>🟢 Low</td></tr>
+            <tr><td><strong>SEO</strong></td><td>Meta tags, sitemap, structured data for landing page</td><td>🟢 Low</td></tr>
+            <tr><td><strong>Analytics</strong></td><td>Add Plausible or PostHog for usage tracking</td><td>🟢 Low</td></tr>
+        </tbody>
+    </table>
+
+    <br><br>
+    <div style="text-align: center; padding: 20px 0; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 8pt;">
+        <p>Document prepared by Antigravity AI Development &nbsp;•&nbsp; 22 April 2026</p>
+        <p>© 2026 SEQ Drone Inspections Pty Ltd. All rights reserved.</p>
+    </div>
+</div>
+
+<div class="bottom-spacer no-print"></div>
+
+</body>
+</html>
